@@ -26,6 +26,19 @@ func main() {
 		panic(err)
 	}
 
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS expenses (
+			id SERIAL PRIMARY KEY,
+			title TEXT,
+			amount FLOAT,
+			note TEXT,
+			tags TEXT[]
+		);
+	`)
+	if err != nil {
+		panic(err)
+	}
+
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")

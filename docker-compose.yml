@@ -5,7 +5,7 @@ services:
       POSTGRES_PASSWORD: iOPXeR1wYsEIybr4lTUrtbBy
       POSTGRES_DB: expense-tracking-db
     ports:
-      - "5432:5432"
+      - 5432:5432
     volumes:
       - ./postgres:/var/lib/postgresql/data
 
@@ -14,7 +14,7 @@ services:
     working_dir: /app
     command: sh -c "go run server.go"
     ports:
-      - "8080:8080"
+      - 2565:2565
     volumes:
       - ./:/app
     environment:

@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:13.9-alpine3.17
+    environment:
+      POSTGRES_PASSWORD: iOPXeR1wYsEIybr4lTUrtbBy
+      POSTGRES_DB: expense-tracking-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  go:
+    image: golang:1.19.4-alpine3.17
+    working_dir: /app
+    command: sh -c "go run server.go"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+    environment:
+      - PORT=2565
+      - DATABASE_URL=postgres://postgres:iOPXeR1wYsEIybr4lTUrtbBy@postgres:5432/expense-tracking-db?sslmode=disable
+    depends_on:
+      - postgres

@@ -19,6 +19,13 @@ type Expense struct {
 	Tags   []string `json:"tags"`
 }
 
+type ExpenseResponse struct {
+	Title  string   `json:"title"`
+	Amount float64  `json:"amount"`
+	Note   string   `json:"note"`
+	Tags   []string `json:"tags"`
+}
+
 func main() {
 	fmt.Println("Please use server.go for main file")
 	fmt.Println("start at port:", os.Getenv("PORT"))
@@ -120,7 +127,12 @@ func main() {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
-		return c.JSON(http.StatusOK, expense)
+		return c.JSON(http.StatusOK, ExpenseResponse{
+			Title:  expense.Title,
+			Amount: expense.Amount,
+			Note:   expense.Note,
+			Tags:   expense.Tags,
+		})
 	})
 
 	e.PUT("/expenses/:id", func(c echo.Context) error {
@@ -137,7 +149,12 @@ func main() {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
-		return c.JSON(http.StatusOK, expense)
+		return c.JSON(http.StatusOK, ExpenseResponse{
+			Title:  expense.Title,
+			Amount: expense.Amount,
+			Note:   expense.Note,
+			Tags:   expense.Tags,
+		})
 	})
 
 	e.Logger.Fatal(e.Start(":" + os.Getenv("PORT")))

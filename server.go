@@ -92,6 +92,22 @@ func main() {
 		return c.JSON(http.StatusOK, expenses)
 	})
 
+	e.GET("/expenses/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		row := db.QueryRow(`
+			SELECT id, title, amount, note, tags
+			FROM expenses
+			WHERE id = $1;
+		`, id)
+		var expense Expense
+		var tags []string
+		if err := row.Scan(&expense.ID, &expense.Title, &expense.Amount, &expense.Note, (*pq.StringArray)(&tags)); err != nil {
+			return c.JSON(http.StatusInternalServerError, "Expense not found!")
+		}
+		expense.Tags = tags
+		return c.JSON(http.StatusOK, expense)
+	})
+
 	e.POST("/expenses", func(c echo.Context) error {
 		expense := new(Expense)
 		if err = c.Bind(expense); err != nil {

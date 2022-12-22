@@ -1,5 +1,7 @@
 package expense
 
+import "context"
+
 // Expense represents the cost incurred by a user for a particular purpose.
 type Expense struct {
 	// ID is the unique identifier for the expense.
@@ -12,4 +14,8 @@ type Expense struct {
 	Note string `json:"note"`
 	// Tags are the list of tags associated with the expense.
 	Tags []string `json:"tags"`
+}
+
+type Repository interface {
+	SaveExpense(ctx context.Context, ex Expense) (Expense, error)
 }

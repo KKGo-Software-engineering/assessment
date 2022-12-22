@@ -23,3 +23,7 @@ type Repository interface {
 type Service interface {
 	CreateExpense(ctx context.Context, ex Expense) (Expense, error)
 }
+
+type service struct {
+	repo Repository
+}

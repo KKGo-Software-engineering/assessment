@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	// ErrInvalidArgs is returned when the arguments are invalid.
 	ErrInvalidArgs = errors.New("invalid argument")
 )
 

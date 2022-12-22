@@ -1,6 +1,13 @@
 package expense
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrInvalidArgs = errors.New("invalid argument")
+)
 
 // Expense represents the cost incurred by a user for a particular purpose.
 type Expense struct {
@@ -26,4 +33,15 @@ type Service interface {
 
 type service struct {
 	repo Repository
+}
+
+func NewService(repo Repository) Service {
+	return &service{repo: repo}
+}
+
+func (s *service) CreateExpense(ctx context.Context, ex Expense) (Expense, error) {
+	if ex.Title == "" || ex.Amount == 0 {
+		return Expense{}, ErrInvalidArgs
+	}
+	return s.repo.SaveExpense(ctx, ex)
 }

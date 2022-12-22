@@ -2,7 +2,10 @@ package expense
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+
+	"github.com/lib/pq"
 )
 
 var (
@@ -26,6 +29,31 @@ type Expense struct {
 
 type Repository interface {
 	SaveExpense(ctx context.Context, ex Expense) (Expense, error)
+}
+
+type repository struct {
+	db *sql.DB
+}
+
+func NewRepository(db *sql.DB) Repository {
+	return &repository{db: db}
+}
+
+func (r repository) SaveExpense(ctx context.Context, ex Expense) (Expense, error) {
+	row := r.db.QueryRowContext(ctx, `
+  INSERT INTO expenses (
+    title, 
+    amount, 
+    note,
+    tags
+  ) VALUES ($1, $2, $3, $4)
+  RETURNING id`,
+		ex.Title, ex.Amount, ex.Note, pq.Array(ex.Tags))
+
+	if err := row.Scan(&ex.ID); err != nil {
+		return Expense{}, err
+	}
+	return ex, nil
 }
 
 type Service interface {

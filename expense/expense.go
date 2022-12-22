@@ -3,14 +3,8 @@ package expense
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/lib/pq"
-)
-
-var (
-	// ErrInvalidArgs is returned when the arguments are invalid.
-	ErrInvalidArgs = errors.New("invalid argument")
 )
 
 // Expense represents the cost incurred by a user for a particular purpose.
@@ -69,8 +63,5 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) CreateExpense(ctx context.Context, ex Expense) (Expense, error) {
-	if ex.Title == "" || ex.Amount == 0 {
-		return Expense{}, ErrInvalidArgs
-	}
 	return s.repo.SaveExpense(ctx, ex)
 }

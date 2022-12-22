@@ -19,3 +19,7 @@ type Expense struct {
 type Repository interface {
 	SaveExpense(ctx context.Context, ex Expense) (Expense, error)
 }
+
+type Service interface {
+	CreateExpense(ctx context.Context, ex Expense) (Expense, error)
+}

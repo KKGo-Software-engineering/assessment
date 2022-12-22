@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/atompsv/assessment/expense"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -19,6 +22,15 @@ func main() {
 	if err := createExpenseTable(db); err != nil {
 		log.Fatal(err)
 	}
+
+	expenseRepo := expense.NewRepository(db)
+	expenseService := expense.NewService(expenseRepo)
+	expenseHandler := expense.NewHandler(expenseService)
+
+	e := echo.New()
+	expenseHandler.Install(e)
+
+	e.Logger.Fatal(e.Start(":" + os.Getenv("PORT")))
 }
 
 func createExpenseTable(db *sql.DB) error {

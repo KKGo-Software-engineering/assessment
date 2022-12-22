@@ -42,10 +42,13 @@ func TestCreateExpense(t *testing.T) {
 			Note:   "note",
 			Tags:   []string{"tag1", "tag2"},
 		}
+		wantEx := expense.Expense{}
+		wantExErr := expense.ErrInvalidArgs
+		mockRepo.On("SaveExpense", ex).Return(wantEx, wantExErr).Once()
 
 		got, err := service.CreateExpense(context.Background(), ex)
 
-		assert.Equal(t, expense.ErrInvalidArgs, err)
-		assert.Equal(t, expense.Expense{}, got)
+		assert.Equal(t, wantExErr, err)
+		assert.Equal(t, wantEx, got)
 	})
 }

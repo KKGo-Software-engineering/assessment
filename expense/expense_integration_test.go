@@ -64,4 +64,20 @@ func TestIntegrationCreateExpense(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusCreated, res.StatusCode)
 	})
+
+	t.Run("bad request", func(t *testing.T) {
+		body := bytes.NewBufferString(`{
+			"t": "atom",
+			"amount": "19",
+			"note": "note",
+			"tags": ["tag1", "tag2"]
+		}`)
+		var ex expense.Expense
+
+		res := request(http.MethodPost, uri("expenses"), body)
+		err := res.Decode(&ex)
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	})
 }

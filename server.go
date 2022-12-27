@@ -32,6 +32,7 @@ func main() {
 
 	g := e.Group("expenses")
 	g.POST("", expense.CreateExpense)
+	g.PUT("/:id", expense.UpdateExpense)
 	g.GET("/:id", expense.GetExpenseByID)
 
 	// graceful shutdown

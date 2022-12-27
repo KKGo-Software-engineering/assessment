@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateExpenseAPI(t *testing.T) {
+func TestCreateExpenseApi(t *testing.T) {
 
 	body := bytes.NewBufferString(`{
 		"title":"expense",
@@ -54,6 +54,9 @@ func (r *Response) Decode(v interface{}) error {
 
 // ใช้ในการยิง request ไปยัง server เพื่อทดสอบโดยใช้ http.NewRequest ในการสร้าง request
 func request(method, url string, body io.Reader) *Response {
+	if body == nil {
+		body = bytes.NewBufferString("")
+	}
 	req, _ := http.NewRequest(method, url, body)
 	// req.Header.Add("Authorization", os.Getenv("AUTH_TOKEN"))
 	req.Header.Add("Content-Type", "application/json")

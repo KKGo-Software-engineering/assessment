@@ -30,9 +30,9 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	g := e.Group("/expenses/")
+	g := e.Group("expenses")
 	g.POST("", expense.CreateExpense)
-	g.GET(":id", expense.GetExpenseByID)
+	g.GET("/:id", expense.GetExpenseByID)
 
 	// graceful shutdown
 	signals := make(chan os.Signal, 1)

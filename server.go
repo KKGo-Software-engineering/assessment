@@ -28,8 +28,11 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	e.POST("/expenses", expense.CreateExpense)
+	g := e.Group("expenses")
+	g.POST("", expense.CreateExpense)
+	g.GET("/:id", expense.GetExpenseByID)
 
 	// graceful shutdown
 	signals := make(chan os.Signal, 1)

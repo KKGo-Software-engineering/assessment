@@ -1,4 +1,6 @@
-// go:build unit
+//go:build unit
+// +build unit
+
 package expense
 
 import (

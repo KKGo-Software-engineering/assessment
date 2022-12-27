@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,19 +15,21 @@ import (
 
 	"github.com/Doittikorn/assessment/pkg/config"
 	"github.com/Doittikorn/assessment/pkg/db"
+	"github.com/Doittikorn/assessment/pkg/expense"
 )
 
 func main() {
 	c := config.NewConfig()
+	// connect to db
 	db.ConnectDB()
+	// setup expense database
+	expense := expense.NewApplication(db.GetDB())
 
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 
-	e.GET("/", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, `Hello`)
-	})
+	e.POST("/expenses", expense.CreateExpense)
 
 	// graceful shutdown
 	signals := make(chan os.Signal, 1)

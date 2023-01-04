@@ -2,24 +2,25 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
-	"os"
-	"log"
-	"io/ioutil"
-	"net/http"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
 	"strings"
 
-	"github.com/lib/pq"
+	"context"
+	"os/signal"
+	"syscall"
 
+	"github.com/lib/pq"
 )
 
 var db *sql.DB
 
-
 func main() {
 	//docker run --name postgreskbtg  -p 5432:5432 -e POSTGRES_USER=junjao -e POSTGRES_PASSWORD=pass99word -e POSTGRES_DB=assessdb -d postgres
-
 
 	fmt.Println("Please use server.go for main file")
 	fmt.Println("start at port:", os.Getenv("PORT"))
@@ -29,16 +30,15 @@ func main() {
 	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Connect to database error", err)
-	}else{
+	} else {
 		log.Println(db)
 	}
 
 	defer db.Close()
 
-    log.Println("okay")
+	log.Println("okay")
 
-
-     createTb := `
+	createTb := `
 		CREATE TABLE IF NOT EXISTS expenses (
 			id SERIAL PRIMARY KEY,
 			title TEXT,
@@ -48,21 +48,16 @@ func main() {
 		);	 
 	 `
 
-	 rs, err2 := db.Exec(createTb)
+	rs, err2 := db.Exec(createTb)
 
-	 if err2 != nil {
+	if err2 != nil {
 		log.Fatal("Create table error", err2)
 	}
 
 	rowseffected, _ := rs.RowsAffected()
-	if(rowseffected == 0){
+	if rowseffected == 0 {
 		fmt.Println("Success create table expenses")
 	}
-
-
-	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	//	w.Write([]byte(`{"name": "anuchito"}`))
-	//})
 
 	//this path is for GET ALL expenses and POST(insert) new expense
 	//GET /expenses
@@ -73,23 +68,41 @@ func main() {
 	//PUT /expenses/1 {json}
 	http.HandleFunc("/expenses/", expenseSpecificHandler)
 
+	srv := http.Server{
+		Addr:    ":2565",
+		Handler: nil,
+	}
 
+	go func() {
+		log.Fatal(srv.ListenAndServe())
+	}()
 
 	log.Println("Server started at " + os.Getenv("PORT"))
-	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), nil))
-	log.Println("bye bye!")
 
+	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//	w.Write([]byte(`{"name": "anuchito"}`))
+	//})
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	<-shutdown
+	fmt.Println("shutting down...")
+	if err := srv.Shutdown(context.Background()); err != nil {
+		fmt.Println("shutdown err:", err)
+	}
+	fmt.Println("bye bye")
 
 }
-
 
 type Expense struct {
-	ID   int    	  `json:"id"`
-	Title string 	  `json:"title"`
-	Amount int 		  `json:"amount"`
-	Note  string 	  `json:"note"`
-	Tags  []string    `json:"tags"`
+	ID     int      `json:"id"`
+	Title  string   `json:"title"`
+	Amount int      `json:"amount"`
+	Note   string   `json:"note"`
+	Tags   []string `json:"tags"`
 }
+
 func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 
 	//authentication
@@ -100,29 +113,28 @@ func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 
 	idreq := strings.TrimPrefix(req.URL.Path, "/expenses/")
 
-
 	if req.Method == "GET" {
 
 		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses where id=$1")
 		if err != nil {
 			log.Fatal("can'tprepare query one row statment", err)
 		}
-	
+
 		rowId := idreq
 		row := stmt.QueryRow(rowId)
 
 		var id, amount int
 		var title, note string
 		var tags []string
-	
+
 		//checl row exist or not ????
 		err = row.Scan(&id, &title, &amount, &note, pq.Array(&tags))
-		if err ==  sql.ErrNoRows{
+		if err == sql.ErrNoRows {
 			//log.Fatal("can't Scan row into variables", err)
 			fmt.Println("can't Scan row into variables")
 			return
 		}
-	
+
 		e := Expense{}
 		e.ID = id
 		e.Title = title
@@ -130,19 +142,15 @@ func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 		e.Note = note
 		e.Tags = tags
 
-
 		fmt.Println("one row", id, title, amount, note, tags)
-
 
 		ejson, _ := json.Marshal(e)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(ejson)
 
-
-
 	}
-	
+
 	if req.Method == "PUT" {
 
 		fmt.Println("PUT here")
@@ -152,22 +160,22 @@ func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal("can'tprepare query one row statment", err)
 		}
-	
+
 		rowId := idreq
 		row := stmt.QueryRow(rowId)
 
 		var id, amount int
 		var title, note string
 		var tags []string
-	
+
 		//checl row exist or not ????
 		err = row.Scan(&id, &title, &amount, &note, pq.Array(&tags))
-		if err ==  sql.ErrNoRows{
+		if err == sql.ErrNoRows {
 			//log.Fatal("can't Scan row into variables", err)
 			fmt.Println("can't Scan row into variables")
 			return
 		}
-	
+
 		// e := Expense{}
 		// e.ID = id
 		// e.Title = title
@@ -175,13 +183,9 @@ func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 		// e.Note = note
 		// e.Tags = tags
 
-
 		fmt.Println("one row", id, title, amount, note, tags)
 
 		//ID exists
-
-
-
 
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -197,37 +201,28 @@ func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-
 		//setting id from url /PUT /expenses/:id
 		e.ID = id
 
 		//convert slice to postgres array
-		pgTagsarr := pq.Array(e.Tags)	
-		
-		
+		pgTagsarr := pq.Array(e.Tags)
+
 		stmtupdate, errupdate := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5 WHERE id=$1;")
 
 		if errupdate != nil {
 			log.Fatal("can't prepare statment update", errupdate)
 		}
 
-		if _, err := stmtupdate.Exec(e.ID,e.Title,e.Amount,e.Note,pgTagsarr); err != nil {
+		if _, err := stmtupdate.Exec(e.ID, e.Title, e.Amount, e.Note, pgTagsarr); err != nil {
 			log.Fatal("error execute update ", err)
 		}
 
-		fmt.Println("update success")	
-
-
+		fmt.Println("update success")
 
 		ejson, _ := json.Marshal(e)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(ejson)		
-
-
-
-
-
+		w.Write(ejson)
 
 	}
 
@@ -236,7 +231,7 @@ func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 func expensesHandler(w http.ResponseWriter, req *http.Request) {
 
 	//authentication
-	checkAuthentication(w, req)	
+	checkAuthentication(w, req)
 
 	if req.Method == "POST" {
 		log.Println("POST")
@@ -275,20 +270,16 @@ func expensesHandler(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(ejson)
 
-
-
 	}
-
 
 	if req.Method == "GET" {
 		log.Println("GET")
-
 
 		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses")
 		if err != nil {
 			log.Fatal("can't prepare query all expenses statment", err)
 		}
-	
+
 		rows, err := stmt.Query()
 		if err != nil {
 			log.Fatal("can't query all expenses", err)
@@ -320,8 +311,6 @@ func expensesHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println(id, title, amount, note, tags)
 		}
 
-
-
 		ejson, err := json.Marshal(expenses)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -333,8 +322,6 @@ func expensesHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(ejson)
 	}
 }
-
-
 
 func checkAuthentication(w http.ResponseWriter, req *http.Request) {
 
@@ -351,6 +338,6 @@ func checkAuthentication(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println("Auth passed.")	
+	fmt.Println("Auth passed.")
 
 }

@@ -1,0 +1,100 @@
+package handler
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"log"
+
+	"database/sql"
+)
+
+type handler struct {
+	DB *sql.DB
+}
+
+func NewApplication(db *sql.DB) *handler {
+	return &handler{db}
+}
+
+
+type Response struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Info string `json:"info"`
+}
+
+type Expense struct {
+	ID     int      `json:"id"`
+	Title  string   `json:"title"`
+	Amount int      `json:"amount"`
+	Note   string   `json:"note"`
+	Tags   string 	`json:"tags"`
+	//Tags   []string `json:"tags"`
+}
+
+var get = http.Get
+
+
+func (h *handler) Greeting(url string) (*Response, error) {
+	fmt.Println(url)
+	resp, err := get(url)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	rp := &Response{}
+	if err := json.Unmarshal(body, rp); err != nil {
+		return nil, err
+	}
+	return rp, nil
+}
+
+
+//func (h *handler) ListExpenses(url string) (*Expense, error) {
+func (h *handler) ListExpenses(r *http.Request, w http.ResponseWriter) error {	
+//func (h *handler) ListExpenses(r *http.Request, w http.ResponseWriter)  {	
+
+	// fmt.Println(url)
+	// resp, err := get(url)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// ep := &Expense{}
+	// if err := json.Unmarshal(body, ep); err != nil {
+	// 	return nil, err
+	// }
+	// return ep, nil
+
+	rows, err := h.DB.Query("SELECT * FROM expenses")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var nn = []Expense{}
+	var n = Expense{}
+
+	for rows.Next() {
+		err := rows.Scan(&n.ID, &n.Title, &n.Amount, &n.Note, &n.Tags)
+		if err != nil {
+			log.Fatal(err)
+		}
+		nn = append(nn, n)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	return json.NewEncoder(w).Encode(nn)
+
+}
+ 
+

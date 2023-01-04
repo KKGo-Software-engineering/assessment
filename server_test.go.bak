@@ -1,0 +1,66 @@
+
+package main
+
+import (
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"testing"
+
+	"encoding/json"
+	"io/ioutil"
+
+)
+
+type Response struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Info string `json:"info"`
+}
+
+var get = http.Get
+
+func TestMakeHTTPCall(url string) (*Response, error) {
+	resp, err := get(url)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	r := &Response{}
+	if err := json.Unmarshal(body, r); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+
+func TestMakeHTTP(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"id": 1, "name": "AnuchitO", "info": "gopher"}`))
+	}))
+	want := &Response{
+		ID:   1,
+		Name: "AnuchitO",
+		Info: "gopher",
+	}
+
+	t.Run("EXP01 POST Expense", func(t *testing.T) {
+		defer server.Close()
+
+		resp, err := MakeHTTPCall(server.URL)
+
+		if !reflect.DeepEqual(resp, want) {
+			t.Errorf("expected (%v), got (%v)", want, resp)
+		}
+
+		if !errors.Is(err, nil) {
+			t.Errorf("expected (%v), got (%v)", nil, err)
+		}
+	})
+}
+

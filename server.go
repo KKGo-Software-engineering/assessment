@@ -14,6 +14,8 @@ import (
 	"os/signal"
 	"syscall"
 
+    "github.com/sutthiphong2005/assessment/rest/handler2"
+
 	"github.com/lib/pq"
 )
 

@@ -296,6 +296,7 @@ func TestITPutExpense(t *testing.T) {
 
 
 func TestITCreateExpenseID2(t *testing.T) {
+	t.Log("==============11111===============")
 
 	// Setup server
 	eh := echo.New()
@@ -321,6 +322,9 @@ func TestITCreateExpenseID2(t *testing.T) {
 			break
 		}
 	}
+
+	t.Log("==============2222222===============")
+
 	// Arrange
 	reqBody := `{"title": "iPhone 14 Pro Max 1TB","amount": 66900,"note": "birthday gift from my love","tags": ["gadget"]}`
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d/expenses", serverPort), strings.NewReader(reqBody))
@@ -336,8 +340,10 @@ func TestITCreateExpenseID2(t *testing.T) {
 	assert.NoError(t, err)
 	resp.Body.Close()
 
+	t.Log(byteBody)
+	t.Log(err)
 	// Assertions
-	expected := "{\"id\":2,\"title\":\"iPhone 14 Pro Max 1TB\",\"amount\":66900,\"note\":\"birthday gift from my love\",\"tags\":[\"gadget\"]}"
+	expected := "{\"id\":2,\"title\":\"iPhone 14 Pro Max 1TB xx\",\"amount\":66900,\"note\":\"birthday gift from my love\",\"tags\":[\"gadget\"]}"
 
 
 	//fmt.Println(resp.StatusCode)
@@ -345,7 +351,7 @@ func TestITCreateExpenseID2(t *testing.T) {
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		assert.Equal(t, expected, strings.TrimSpace(string(resp.StatusCode)))
+		assert.Equal(t, expected, strings.TrimSpace(string(byteBody)))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

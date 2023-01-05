@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"encoding/json"
 
 	"github.com/labstack/echo/v4"
 
@@ -153,7 +154,10 @@ func (h *handler) CreateExpense(c echo.Context) error {
 	
 	fmt.Printf("id : % #v\n", exp)
 
-	return c.JSON(http.StatusCreated, exp)
+	//return c.JSON(http.StatusCreated, exp)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	c.Response().WriteHeader(http.StatusCreated)
+	return json.NewEncoder(c.Response()).Encode(exp)	
 }
 
 

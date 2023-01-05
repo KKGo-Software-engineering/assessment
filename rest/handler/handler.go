@@ -40,6 +40,10 @@ type Expense struct {
 	Tags  	[]string 	`json:"tags"`
 }
 
+type Err struct {
+	Message string `json:"message"`
+}
+
 func (h *handler) ListNews(c echo.Context) error {
 	rows, err := h.DB.Query("SELECT * FROM news_articles")
 	if err != nil {
@@ -133,24 +137,21 @@ func (h *handler) GetExpenses(c echo.Context) error {
 
 func (h *handler) CreateExpense(c echo.Context) error {
 
-	var exp Expense
-	err := c.Bind(&exp); if err != nil {
-		return c.String(http.StatusBadRequest, "bad request")
+    exp := Expense{}
+	err := c.Bind(&exp)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
-
 
 	pgTagsarr := pq.Array(exp.Tags)
 
-	row := h.DB.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id", exp.Title, exp.Amount, exp.Note, pgTagsarr)
-	var id int
-	err = row.Scan(&id)
+	row := h.DB.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id;", exp.Title, exp.Amount, exp.Note, pgTagsarr)
+	err = row.Scan(&exp.ID)
 	if err != nil {
-		fmt.Println("can't scan id", err)
-		return err
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
-
-	exp.ID = id
 	
+	fmt.Printf("id : % #v\n", exp)
 
 	return c.JSON(http.StatusCreated, exp)
 }
@@ -160,16 +161,14 @@ func (h *handler) UpdateExpense(c echo.Context) error {
 
 	eid := c.Param("id")
 
-	var exp Expense
+	exp := Expense{}
 	err := c.Bind(&exp); if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
 	exp.ID, _ = strconv.Atoi(eid)
 
-
 	pgTagsarr := pq.Array(exp.Tags)
-
 
 	stmtupdate, errupdate := h.DB.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5 WHERE id=$1")
 

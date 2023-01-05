@@ -16,6 +16,7 @@ import (
 
     "github.com/sutthiphong2005/assessment/rest/handler"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	_ "github.com/lib/pq"
 )
@@ -66,6 +67,9 @@ func main() {
 	h := handler.NewApplication(db)
 
 	e := echo.New()
+
+	e.Use(middleware.Logger())
+
 	e.GET("/expenses", h.ListExpenses)
 	e.GET("/expenses/:id", h.GetExpenses)
 	e.POST("/expenses", h.CreateExpense)

@@ -340,11 +340,12 @@ func TestITCreateExpenseID2(t *testing.T) {
 	expected := "{\"id\":2,\"title\":\"iPhone 14 Pro Max 1TB\",\"amount\":66900,\"note\":\"birthday gift from my love\",\"tags\":[\"gadget\"]}"
 
 
-	fmt.Println(resp.StatusCode)
+	//fmt.Println(resp.StatusCode)
+	log.Println(resp.StatusCode)
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		assert.Equal(t, expected, strings.TrimSpace(string(byteBody)))
+		assert.Equal(t, expected, strings.TrimSpace(string(resp.StatusCode)))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

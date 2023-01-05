@@ -4,11 +4,10 @@ go 1.19
 
 require (
 	github.com/lib/pq v1.10.7
-	github.com/stretchr/testify v1.8.1
+	github.com/sutthiphong2005/assessment/rest/handler v0.0.0-20230105190501-6af91874609e
 )
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
@@ -20,9 +19,4 @@ require (
 	golang.org/x/text v0.5.0 // indirect
 )
 
-require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/labstack/echo/v4 v4.10.0
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
+require github.com/labstack/echo/v4 v4.10.0

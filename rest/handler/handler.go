@@ -152,7 +152,7 @@ func (h *handler) CreateExpense(c echo.Context) error {
 	exp.ID = id
 	
 
-	return c.JSON(http.StatusOK, exp)
+	return c.JSON(http.StatusCreated, exp)
 }
 
 

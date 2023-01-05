@@ -2,21 +2,22 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
-	"net/http"
+	//"net/http"
 	"os"
-	"strings"
+	//"strings"
 
-	"context"
-	"os/signal"
-	"syscall"
+	//"context"
+	//"os/signal"
+	//"syscall"
 
-    "github.com/sutthiphong2005/assessment/rest/handler2"
+    "github.com/sutthiphong2005/assessment/rest/handler"
+	"github.com/labstack/echo/v4"
 
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
@@ -61,285 +62,298 @@ func main() {
 		fmt.Println("Success create table expenses")
 	}
 
-	//this path is for GET ALL expenses and POST(insert) new expense
-	//GET /expenses
-	//POST /expenses {json}
-	http.HandleFunc("/expenses", expensesHandler)
-	//this path is for GET specific expense and PUT(update) specific expense
-	//GET /expenses/1
-	//PUT /expenses/1 {json}
-	http.HandleFunc("/expenses/", expenseSpecificHandler)
 
-	srv := http.Server{
-		Addr:    ":2565",
-		Handler: nil,
-	}
+	h := handler.NewApplication(db)
 
-	go func() {
-		log.Fatal(srv.ListenAndServe())
-	}()
+	e := echo.New()
+	e.GET("/expenses", h.ListExpenses)
+	e.GET("/expenses/:id", h.GetExpenses)
+	e.POST("/expenses", h.CreateExpense)
+	e.PUT("/expenses/:id", h.UpdateExpense)
+	
+	// Intentionally, not setup database at this moment so we ignore feature to access database
+	// e.GET("/news", h.ListNews)
+	serverPort := os.Getenv("PORT")
+	e.Logger.Fatal(e.Start(serverPort))
 
-	log.Println("Server started at " + os.Getenv("PORT"))
 
-	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	//	w.Write([]byte(`{"name": "anuchito"}`))
-	//})
 
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	// //this path is for GET ALL expenses and POST(insert) new expense
+	// //GET /expenses
+	// //POST /expenses {json}
+	// http.HandleFunc("/expenses", expensesHandler)
+	// //this path is for GET specific expense and PUT(update) specific expense
+	// //GET /expenses/1
+	// //PUT /expenses/1 {json}
+	// http.HandleFunc("/expenses/", expenseSpecificHandler)
 
-	<-shutdown
-	fmt.Println("shutting down...")
-	if err := srv.Shutdown(context.Background()); err != nil {
-		fmt.Println("shutdown err:", err)
-	}
-	fmt.Println("bye bye")
+	// srv := http.Server{
+	// 	Addr:    ":2565",
+	// 	Handler: nil,
+	// }
 
-}
+	// go func() {
+	// 	log.Fatal(srv.ListenAndServe())
+	// }()
 
-type Expense struct {
-	ID     int      `json:"id"`
-	Title  string   `json:"title"`
-	Amount int      `json:"amount"`
-	Note   string   `json:"note"`
-	Tags   []string `json:"tags"`
-}
+	// log.Println("Server started at " + os.Getenv("PORT"))
 
-func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 
-	//authentication
-	checkAuthentication(w, req)
+	// shutdown := make(chan os.Signal, 1)
+	// signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	path := req.URL.Path
-	fmt.Println("Path :" + path)
-
-	idreq := strings.TrimPrefix(req.URL.Path, "/expenses/")
-
-	if req.Method == "GET" {
-
-		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses where id=$1")
-		if err != nil {
-			log.Fatal("can'tprepare query one row statment", err)
-		}
-
-		rowId := idreq
-		row := stmt.QueryRow(rowId)
-
-		var id, amount int
-		var title, note string
-		var tags []string
-
-		//checl row exist or not ????
-		err = row.Scan(&id, &title, &amount, &note, pq.Array(&tags))
-		if err == sql.ErrNoRows {
-			//log.Fatal("can't Scan row into variables", err)
-			fmt.Println("can't Scan row into variables")
-			return
-		}
-
-		e := Expense{}
-		e.ID = id
-		e.Title = title
-		e.Amount = amount
-		e.Note = note
-		e.Tags = tags
-
-		fmt.Println("one row", id, title, amount, note, tags)
-
-		ejson, _ := json.Marshal(e)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(ejson)
-
-	}
-
-	if req.Method == "PUT" {
-
-		fmt.Println("PUT here")
-
-		//check id is exist or not ??????
-		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses where id=$1")
-		if err != nil {
-			log.Fatal("can'tprepare query one row statment", err)
-		}
-
-		rowId := idreq
-		row := stmt.QueryRow(rowId)
-
-		var id, amount int
-		var title, note string
-		var tags []string
-
-		//checl row exist or not ????
-		err = row.Scan(&id, &title, &amount, &note, pq.Array(&tags))
-		if err == sql.ErrNoRows {
-			//log.Fatal("can't Scan row into variables", err)
-			fmt.Println("can't Scan row into variables")
-			return
-		}
-
-		// e := Expense{}
-		// e.ID = id
-		// e.Title = title
-		// e.Amount = amount
-		// e.Note = note
-		// e.Tags = tags
-
-		fmt.Println("one row", id, title, amount, note, tags)
-
-		//ID exists
-
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			fmt.Fprintf(w, "error : %v", err)
-			return
-		}
-
-		e := Expense{}
-
-		err = json.Unmarshal(body, &e)
-		if err != nil {
-			fmt.Fprintf(w, "error: %v", err)
-			return
-		}
-
-		//setting id from url /PUT /expenses/:id
-		e.ID = id
-
-		//convert slice to postgres array
-		pgTagsarr := pq.Array(e.Tags)
-
-		stmtupdate, errupdate := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5 WHERE id=$1;")
-
-		if errupdate != nil {
-			log.Fatal("can't prepare statment update", errupdate)
-		}
-
-		if _, err := stmtupdate.Exec(e.ID, e.Title, e.Amount, e.Note, pgTagsarr); err != nil {
-			log.Fatal("error execute update ", err)
-		}
-
-		fmt.Println("update success")
-
-		ejson, _ := json.Marshal(e)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(ejson)
-
-	}
+	// <-shutdown
+	// fmt.Println("shutting down...")
+	// if err := srv.Shutdown(context.Background()); err != nil {
+	// 	fmt.Println("shutdown err:", err)
+	// }
+	// fmt.Println("bye bye")
 
 }
 
-func expensesHandler(w http.ResponseWriter, req *http.Request) {
+// type Expense struct {
+// 	ID     int      `json:"id"`
+// 	Title  string   `json:"title"`
+// 	Amount int      `json:"amount"`
+// 	Note   string   `json:"note"`
+// 	Tags   []string `json:"tags"`
+// }
 
-	//authentication
-	checkAuthentication(w, req)
+// func expenseSpecificHandler(w http.ResponseWriter, req *http.Request) {
 
-	if req.Method == "POST" {
-		log.Println("POST")
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			fmt.Fprintf(w, "error : %v", err)
-			return
-		}
+// 	//authentication
+// 	checkAuthentication(w, req)
 
-		e := Expense{}
-		err = json.Unmarshal(body, &e)
-		if err != nil {
-			fmt.Fprintf(w, "error: %v", err)
-			return
-		}
+// 	path := req.URL.Path
+// 	fmt.Println("Path :" + path)
 
-		//convert slice to postgres array
-		pgTagsarr := pq.Array(e.Tags)
+// 	idreq := strings.TrimPrefix(req.URL.Path, "/expenses/")
 
-		row := db.QueryRow("INSERT INTO expenses (title, amount , note, tags) values ($1, $2, $3, $4)  RETURNING id", e.Title, e.Amount, e.Note, pgTagsarr)
-		var id int
-		err = row.Scan(&id)
-		if err != nil {
-			fmt.Println("can't scan id", err)
-			return
-		}
+// 	if req.Method == "GET" {
 
-		fmt.Println("insert into expense success id : ", id)
+// 		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses where id=$1")
+// 		if err != nil {
+// 			log.Fatal("can'tprepare query one row statment", err)
+// 		}
 
-		//response json with id back to user
-		e.ID = id
+// 		rowId := idreq
+// 		row := stmt.QueryRow(rowId)
 
-		ejson, _ := json.Marshal(e)
+// 		var id, amount int
+// 		var title, note string
+// 		var tags []string
 
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(ejson)
+// 		//checl row exist or not ????
+// 		err = row.Scan(&id, &title, &amount, &note, pq.Array(&tags))
+// 		if err == sql.ErrNoRows {
+// 			//log.Fatal("can't Scan row into variables", err)
+// 			fmt.Println("can't Scan row into variables")
+// 			return
+// 		}
 
-	}
+// 		e := Expense{}
+// 		e.ID = id
+// 		e.Title = title
+// 		e.Amount = amount
+// 		e.Note = note
+// 		e.Tags = tags
 
-	if req.Method == "GET" {
-		log.Println("GET")
+// 		fmt.Println("one row", id, title, amount, note, tags)
 
-		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses")
-		if err != nil {
-			log.Fatal("can't prepare query all expenses statment", err)
-		}
+// 		ejson, _ := json.Marshal(e)
 
-		rows, err := stmt.Query()
-		if err != nil {
-			log.Fatal("can't query all expenses", err)
-		}
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.Write(ejson)
 
-		var expenses = []Expense{}
+// 	}
 
-		for rows.Next() {
-			var id int
-			var title string
-			var amount int
-			var note string
-			var tags []string
+// 	if req.Method == "PUT" {
 
-			err := rows.Scan(&id, &title, &amount, &note, pq.Array(&tags))
-			if err != nil {
-				log.Fatal("can't Scan row into variable", err)
-			}
+// 		fmt.Println("PUT here")
 
-			e := Expense{}
-			e.ID = id
-			e.Title = title
-			e.Amount = amount
-			e.Note = note
-			e.Tags = tags
+// 		//check id is exist or not ??????
+// 		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses where id=$1")
+// 		if err != nil {
+// 			log.Fatal("can'tprepare query one row statment", err)
+// 		}
 
-			expenses = append(expenses, e)
+// 		rowId := idreq
+// 		row := stmt.QueryRow(rowId)
 
-			fmt.Println(id, title, amount, note, tags)
-		}
+// 		var id, amount int
+// 		var title, note string
+// 		var tags []string
 
-		ejson, err := json.Marshal(expenses)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "error: %v", err)
-			return
-		}
+// 		//checl row exist or not ????
+// 		err = row.Scan(&id, &title, &amount, &note, pq.Array(&tags))
+// 		if err == sql.ErrNoRows {
+// 			//log.Fatal("can't Scan row into variables", err)
+// 			fmt.Println("can't Scan row into variables")
+// 			return
+// 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(ejson)
-	}
-}
+// 		// e := Expense{}
+// 		// e.ID = id
+// 		// e.Title = title
+// 		// e.Amount = amount
+// 		// e.Note = note
+// 		// e.Tags = tags
 
-func checkAuthentication(w http.ResponseWriter, req *http.Request) {
+// 		fmt.Println("one row", id, title, amount, note, tags)
 
-	u, p, ok := req.BasicAuth()
-	if !ok {
-		w.WriteHeader(401)
-		w.Write([]byte(`can't parse the basic auth`))
-		return
-	}
+// 		//ID exists
 
-	if u != "apidesign" || p != "45678" {
-		w.WriteHeader(401)
-		w.Write([]byte(`Username/Password incorrect.`))
-		return
-	}
+// 		body, err := ioutil.ReadAll(req.Body)
+// 		if err != nil {
+// 			fmt.Fprintf(w, "error : %v", err)
+// 			return
+// 		}
 
-	fmt.Println("Auth passed.")
+// 		e := Expense{}
 
-}
+// 		err = json.Unmarshal(body, &e)
+// 		if err != nil {
+// 			fmt.Fprintf(w, "error: %v", err)
+// 			return
+// 		}
+
+// 		//setting id from url /PUT /expenses/:id
+// 		e.ID = id
+
+// 		//convert slice to postgres array
+// 		pgTagsarr := pq.Array(e.Tags)
+
+// 		stmtupdate, errupdate := db.Prepare("UPDATE expenses SET title=$2, amount=$3, note=$4, tags=$5 WHERE id=$1;")
+
+// 		if errupdate != nil {
+// 			log.Fatal("can't prepare statment update", errupdate)
+// 		}
+
+// 		if _, err := stmtupdate.Exec(e.ID, e.Title, e.Amount, e.Note, pgTagsarr); err != nil {
+// 			log.Fatal("error execute update ", err)
+// 		}
+
+// 		fmt.Println("update success")
+
+// 		ejson, _ := json.Marshal(e)
+
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.Write(ejson)
+
+// 	}
+
+// }
+
+// func expensesHandler(w http.ResponseWriter, req *http.Request) {
+
+// 	//authentication
+// 	checkAuthentication(w, req)
+
+// 	if req.Method == "POST" {
+// 		log.Println("POST")
+// 		body, err := ioutil.ReadAll(req.Body)
+// 		if err != nil {
+// 			fmt.Fprintf(w, "error : %v", err)
+// 			return
+// 		}
+
+// 		e := Expense{}
+// 		err = json.Unmarshal(body, &e)
+// 		if err != nil {
+// 			fmt.Fprintf(w, "error: %v", err)
+// 			return
+// 		}
+
+// 		//convert slice to postgres array
+// 		pgTagsarr := pq.Array(e.Tags)
+
+// 		row := db.QueryRow("INSERT INTO expenses (title, amount , note, tags) values ($1, $2, $3, $4)  RETURNING id", e.Title, e.Amount, e.Note, pgTagsarr)
+// 		var id int
+// 		err = row.Scan(&id)
+// 		if err != nil {
+// 			fmt.Println("can't scan id", err)
+// 			return
+// 		}
+
+// 		fmt.Println("insert into expense success id : ", id)
+
+// 		//response json with id back to user
+// 		e.ID = id
+
+// 		ejson, _ := json.Marshal(e)
+
+// 		w.WriteHeader(http.StatusCreated)
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.Write(ejson)
+
+// 	}
+
+// 	if req.Method == "GET" {
+// 		log.Println("GET")
+
+// 		stmt, err := db.Prepare("SELECT id, title, amount, note, tags FROM expenses")
+// 		if err != nil {
+// 			log.Fatal("can't prepare query all expenses statment", err)
+// 		}
+
+// 		rows, err := stmt.Query()
+// 		if err != nil {
+// 			log.Fatal("can't query all expenses", err)
+// 		}
+
+// 		var expenses = []Expense{}
+
+// 		for rows.Next() {
+// 			var id int
+// 			var title string
+// 			var amount int
+// 			var note string
+// 			var tags []string
+
+// 			err := rows.Scan(&id, &title, &amount, &note, pq.Array(&tags))
+// 			if err != nil {
+// 				log.Fatal("can't Scan row into variable", err)
+// 			}
+
+// 			e := Expense{}
+// 			e.ID = id
+// 			e.Title = title
+// 			e.Amount = amount
+// 			e.Note = note
+// 			e.Tags = tags
+
+// 			expenses = append(expenses, e)
+
+// 			fmt.Println(id, title, amount, note, tags)
+// 		}
+
+// 		ejson, err := json.Marshal(expenses)
+// 		if err != nil {
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			fmt.Fprintf(w, "error: %v", err)
+// 			return
+// 		}
+
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.Write(ejson)
+// 	}
+// }
+
+// func checkAuthentication(w http.ResponseWriter, req *http.Request) {
+
+// 	u, p, ok := req.BasicAuth()
+// 	if !ok {
+// 		w.WriteHeader(401)
+// 		w.Write([]byte(`can't parse the basic auth`))
+// 		return
+// 	}
+
+// 	if u != "apidesign" || p != "45678" {
+// 		w.WriteHeader(401)
+// 		w.Write([]byte(`Username/Password incorrect.`))
+// 		return
+// 	}
+
+// 	fmt.Println("Auth passed.")
+
+// }

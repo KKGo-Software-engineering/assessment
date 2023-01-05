@@ -179,7 +179,7 @@ func TestCreateExpense(t *testing.T) {
 
 	// Assertions
 	if assert.NoError(t, err) {
-		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, http.StatusCreated, rec.Code)
 		assert.Equal(t, expected, strings.TrimSpace(rec.Body.String()))
 	}
 }

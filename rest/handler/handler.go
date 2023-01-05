@@ -10,7 +10,6 @@ import (
 
 	"github.com/lib/pq"
 
-	"fmt"
 	"strconv"
 )
 
@@ -152,8 +151,6 @@ func (h *handler) CreateExpense(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 	
-	fmt.Printf("id : % #v\n", exp)
-
 	//return c.JSON(http.StatusCreated, exp)
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
 	c.Response().WriteHeader(http.StatusCreated)

@@ -118,7 +118,7 @@ func TestITCreateExpense(t *testing.T) {
 	expected := "{\"id\":1,\"title\":\"strawberry smoothie\",\"amount\":79,\"note\":\"night market promotion discount 10 bath\",\"tags\":[\"food\",\"beverage\"]}"
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 		assert.Equal(t, expected, strings.TrimSpace(string(byteBody)))
 	}
 
@@ -296,7 +296,6 @@ func TestITPutExpense(t *testing.T) {
 
 
 func TestITCreateExpenseID2(t *testing.T) {
-	t.Log("==============11111===============")
 
 	// Setup server
 	eh := echo.New()
@@ -323,8 +322,6 @@ func TestITCreateExpenseID2(t *testing.T) {
 		}
 	}
 
-	t.Log("==============2222222===============")
-
 	// Arrange
 	reqBody := `{"title": "iPhone 14 Pro Max 1TB","amount": 66900,"note": "birthday gift from my love","tags": ["gadget"]}`
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d/expenses", serverPort), strings.NewReader(reqBody))
@@ -340,17 +337,12 @@ func TestITCreateExpenseID2(t *testing.T) {
 	assert.NoError(t, err)
 	resp.Body.Close()
 
-	t.Log(byteBody)
-	t.Log(err)
 	// Assertions
-	expected := "{\"id\":2,\"title\":\"iPhone 14 Pro Max 1TB xx\",\"amount\":66900,\"note\":\"birthday gift from my love\",\"tags\":[\"gadget\"]}"
+	expected := "{\"id\":2,\"title\":\"iPhone 14 Pro Max 1TB\",\"amount\":66900,\"note\":\"birthday gift from my love\",\"tags\":[\"gadget\"]}"
 
-
-	//fmt.Println(resp.StatusCode)
-	log.Println(resp.StatusCode)
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 		assert.Equal(t, expected, strings.TrimSpace(string(byteBody)))
 	}
 
@@ -381,6 +373,7 @@ func TestITListExpenses(t *testing.T) {
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", serverPort), 30*time.Second)
 		if err != nil {
 			log.Println(err)
+			log.Println("Just Loop wait port open.....")
 		}
 		if conn != nil {
 			conn.Close()

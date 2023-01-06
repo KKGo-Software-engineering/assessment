@@ -27,8 +27,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
-github.com/sutthiphong2005/assessment/rest/handler v0.0.0-20230105190501-6af91874609e h1:RN5y/1QXA52HXnt+2cvgAwghhRs2kdc7gu33M8wsJaM=
-github.com/sutthiphong2005/assessment/rest/handler v0.0.0-20230105190501-6af91874609e/go.mod h1:KF8Iw4o34iroUfW7D9jwCXyGnuXBtxPl8695dgJwEQY=
+github.com/sutthiphong2005/assessment/rest/handler v0.0.0-20230105231356-a8d318dee0e7 h1:GN8yNOCz52erKe7rOhhkAn94L3UU4nx2hDbPcf7l3Sg=
+github.com/sutthiphong2005/assessment/rest/handler v0.0.0-20230105231356-a8d318dee0e7/go.mod h1:KF8Iw4o34iroUfW7D9jwCXyGnuXBtxPl8695dgJwEQY=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.1/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=

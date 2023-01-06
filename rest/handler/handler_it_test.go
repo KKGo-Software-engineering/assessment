@@ -324,7 +324,7 @@ func TestITCreateExpenseID2(t *testing.T) {
 	}
 
 	// Arrange
-	reqBody := `{"title": "iPhone 14 Pro Max 1TB x","amount": 66900,"note": "birthday gift from my love","tags": ["gadget"]}`
+	reqBody := `{"title": "iPhone 14 Pro Max 1TB","amount": 66900,"note": "birthday gift from my love","tags": ["gadget"]}`
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d/expenses", serverPort), strings.NewReader(reqBody))
 	assert.NoError(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
